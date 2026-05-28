@@ -153,17 +153,13 @@ program
           const record = await store.getSession(idleName);
           if (!record) return;
           monitor.stop();
-          await store.updateStatus(idleName, "complete");
           await teardown.teardown({
             sessionName: idleName,
             worktreePath: record.worktreePath,
             windowId: record.tmuxWindowId,
             autoMerge: options.autoMerge,
           });
-          await store.updateStatus(
-            idleName,
-            teardown.wasMerged(idleName) ? "complete" : "complete",
-          );
+          await store.updateStatus(idleName, "complete");
         };
 
         monitor.start();

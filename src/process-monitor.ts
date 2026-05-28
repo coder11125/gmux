@@ -33,7 +33,7 @@ export class ProcessMonitor {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
-    process.stdout.write("\r\033[K");
+    process.stdout.write("\r\x1b[K");
   }
 
   private async poll(): Promise<void> {
@@ -50,9 +50,10 @@ export class ProcessMonitor {
     this.render();
 
     if (idle.length > 0 && this.onIdle) {
-      for (const entry of idle) {
-        await this.onIdle(entry.sessionName, entry.paneId);
-      }
+      // Only tear down the first idle session. The onIdle callback calls
+      // monitor.stop() which halts further polling, so processing more
+      // than one would race on concurrent git/teardown mutations.
+      await this.onIdle(idle[0]!.sessionName, idle[0]!.paneId);
     }
   }
 
@@ -104,6 +105,6 @@ export class ProcessMonitor {
       const dot = entry.running ? "\u25cf" : "\u25cb";
       parts.push(`[${dot} ${entry.sessionName}]`);
     }
-    process.stdout.write(`\r\033[K${parts.join(" ")}`);
+    process.stdout.write(`\r\x1b[K${parts.join(" ")}`);
   }
 }

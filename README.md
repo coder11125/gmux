@@ -3,11 +3,13 @@
 Launch AI agent coding sessions in isolated git worktrees with live tmux monitoring.
 
 ```
-gmux my-feature "Build a CLI game" -A pi         # single pi agent
-gmux my-feature "Refactor auth" -A aider -a 4    # 4 aider agents, 4 windows
-gmux my-feature "Add tests" -A claude-code -a 4 -p  # 4 claude-code agents, 1 window split 4 ways
-gmux list                                         # show tracked sessions
-gmux doctor                                       # repair stale state
+gmux my-feature "Build a CLI game" -A codex       # single OpenAI Codex agent
+gmux my-feature "Build a CLI game" -A pi          # single pi agent
+gmux my-feature "Refactor auth" -A aider -a 4     # 4 aider agents, 4 windows
+gmux my-feature "Add tests" -A claude-code -a 4 -p   # 4 claude-code agents, 1 window split 4 ways
+gmux my-feature "Add tests" -A codex -a 4 -p      # 4 codex agents, 1 window split 4 ways
+gmux list                                          # show tracked sessions
+gmux doctor                                        # repair stale state
 ```
 
 ## How it works
@@ -18,6 +20,8 @@ gmux doctor                                       # repair stale state
 4. `tmux send-keys` — dispatches the agent command (`pi`, `aider`, `claude-code`, etc.) into the pane
 5. `SessionStore` — persists state to `~/.gmux/sessions.json`
 6. `ProcessMonitor` — polls every 2s and renders a live `[● session]` status bar; when a session finishes, runs teardown (merge prompt, worktree removal, window kill)
+
+Any agent that accepts a prompt on the command line works out of the box — **OpenAI Codex**, **pi**, **aider**, **Claude Code**, and more.
 
 ## Install
 
@@ -69,10 +73,13 @@ Commands:
 Set the agent via `-A`:
 
 ```sh
-gmux my-session "Build a game" -A pi
-gmux my-session "Build a game" -A aider
-gmux my-session "Build a game" -A claude-code
+gmux my-session "Build a game" -A codex       # OpenAI Codex
+gmux my-session "Build a game" -A pi           # pi
+gmux my-session "Build a game" -A aider        # aider
+gmux my-session "Build a game" -A claude-code  # Claude Code
 ```
+
+Any command that accepts a prompt as an argument works. Use `{prompt}` in `.gmuxrc` if the agent expects the prompt elsewhere (e.g., via flag).
 
 Or set a default in `.gmuxrc` (checked in `cwd` → repo root → `~/.gmuxrc`):
 

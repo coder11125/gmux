@@ -21,15 +21,17 @@ program
     "after",
     `
 Examples:
-  gmux my-session "Build a game" -A pi                    single pi agent
-  gmux my-session "Build a game" -A aider                 single aider agent
-  gmux my-session "Build a game" -A aider -a 4            4 aider agents (4 windows)
-  gmux my-session "Build a game" -A claude-code -a 4 -p   4 claude-code agents (1 window, 4 panes)
-  gmux list                                                list tracked sessions
-  gmux list --json                                         session state as JSON
-  gmux list --verbose                                      detailed session list
-  gmux doctor                                              check & repair state
-  gmux doctor --json                                       issues as JSON
+  gmux my-session "Build a game" -A codex                  single OpenAI Codex agent
+  gmux my-session "Build a game" -A pi                     single pi agent
+  gmux my-session "Build a game" -A aider                  single aider agent
+  gmux my-session "Build a game" -A aider -a 4             4 aider agents (4 windows)
+  gmux my-session "Build a game" -A claude-code -a 4 -p    4 claude-code agents (1 window, 4 panes)
+  gmux my-session "Build a game" -A codex -a 4 -p          4 codex agents (1 window, 4 panes)
+  gmux list                                                 list tracked sessions
+  gmux list --json                                          session state as JSON
+  gmux list --verbose                                       detailed session list
+  gmux doctor                                               check & repair state
+  gmux doctor --json                                        issues as JSON
 `,
   );
 

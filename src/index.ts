@@ -79,6 +79,19 @@ program
       const count = Math.max(1, parseInt(options.agents, 10) || 1);
       const createdWorktrees: string[] = [];
 
+      let interrupted = false;
+      const onSignal = async () => {
+        if (interrupted) process.exit(1);
+        interrupted = true;
+        console.error("\n  interrupt  cleaning up...");
+        for (const wt of createdWorktrees) {
+          await $`git worktree remove ${wt}`.nothrow();
+        }
+        await $`git worktree prune`.nothrow();
+        process.exit(1);
+      };
+      process.on("SIGINT", onSignal);
+
       try {
         const instances: Array<{
           name: string;
@@ -171,6 +184,8 @@ program
         }
         await $`git worktree prune`.nothrow();
         process.exit(1);
+      } finally {
+        process.removeListener("SIGINT", onSignal);
       }
     },
   );

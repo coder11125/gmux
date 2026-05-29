@@ -1,4 +1,4 @@
-import { $ } from "bun";
+import { $ } from "./shell.ts";
 import { exists } from "node:fs/promises";
 import Path from "node:path";
 

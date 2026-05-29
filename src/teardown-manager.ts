@@ -1,4 +1,4 @@
-import { $ } from "bun";
+import { $ } from "./shell.ts";
 import { createInterface } from "node:readline";
 
 export interface TeardownOptions {

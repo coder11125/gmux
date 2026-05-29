@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { $ } from "bun";
+import { $ } from "./shell.ts";
 import { Command } from "commander";
 import { GitWorktreeManager } from "./git-worktree-manager.ts";
 import { ConfigProvisioner } from "./config-provisioner.ts";

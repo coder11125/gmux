@@ -1,4 +1,4 @@
-import { $ } from "bun";
+import { $ } from "./shell.ts";
 
 export type IdleCallback = (sessionName: string, paneId: string) => void | Promise<void>;
 

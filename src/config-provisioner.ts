@@ -1,4 +1,4 @@
-import { $ } from "bun";
+import { $ } from "./shell.ts";
 import { cp, readFile, readdir, stat } from "node:fs/promises";
 import Path from "node:path";
 

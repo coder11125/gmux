@@ -10,6 +10,7 @@ import { TeardownManager } from "./teardown-manager.ts";
 import { SessionStore } from "./session-store.ts";
 import { listSessions, type ListOptions } from "./commands/list.ts";
 import { doctorSessions, type DoctorOptions } from "./commands/doctor.ts";
+import { runScript, listScripts } from "./scripts.ts";
 
 const program = new Command();
 
@@ -53,6 +54,30 @@ program
   .action(async (opts: DoctorOptions) => {
     const store = new SessionStore();
     await doctorSessions(store, opts);
+  });
+
+program
+  .command("scripts")
+  .description("Run session management scripts")
+  .argument("[script]", "script name to run (cleanup, health, export, stats)")
+  .option("-l, --list", "list available scripts")
+  .option("-a, --all", "pass --all flag to script")
+  .option("-n, --dry-run", "pass --dry-run flag to script")
+  .option("-v, --verbose", "pass --verbose flag to script")
+  .option("-f, --force", "pass --force flag to script")
+  .option("-j, --json", "pass --json flag to script")
+  .option("-o, --output <file>", "pass --output flag to script")
+  .option("-d, --max-days <days>", "pass --max-days flag to script")
+  .action(async (script: string | undefined, opts: Record<string, unknown>) => {
+    if (opts.list) {
+      listScripts();
+      return;
+    }
+    if (!script) {
+      console.error("  error    Specify a script name or use --list");
+      process.exit(1);
+    }
+    await runScript(script, opts);
   });
 
 program

@@ -232,6 +232,88 @@ gmux can be configured via `~/.gmux/config.json`:
 - `${PANE_ID}` — tmux pane ID
 - `${WINDOW_ID}` — tmux window ID
 
+## Scripts
+
+gmux includes Ruby scripts for session management, git automation, monitoring, and utilities.
+
+### Running Scripts
+
+```sh
+gmux scripts --list                    # list all available scripts
+gmux scripts <script-name> [options]   # run a script
+```
+
+### Session Management
+
+| Script | Description |
+|---|---|
+| `cleanup` | Remove stale sessions/worktrees older than N days |
+| `health` | Check session health and repair issues |
+| `export` | Export session configuration (JSON/YAML/TOML) |
+| `stats` | Show session usage statistics |
+
+```sh
+gmux scripts cleanup --max-days 7 --dry-run
+gmux scripts health --repair --verbose
+gmux scripts export --all --format json --output sessions.json
+gmux scripts stats --json
+```
+
+### Git Automation
+
+| Script | Description |
+|---|---|
+| `auto-commit` | Auto-commit changes with smart messages |
+| `branch-cleanup` | Delete merged branches automatically |
+| `conflict-helper` | Interactive conflict resolution |
+| `pr-ready` | Prepare branch for PR (test, lint, push) |
+
+```sh
+gmux scripts auto-commit --all --conventional
+gmux scripts branch-cleanup --merged-only --dry-run
+gmux scripts conflict-helper --auto-resolve ours
+gmux scripts pr-ready --skip-tests --force
+```
+
+### Monitoring
+
+| Script | Description |
+|---|---|
+| `watcher` | Monitor agent output for errors |
+| `notifier` | Send notifications on session events |
+| `logger` | Capture tmux pane output to files |
+
+```sh
+gmux scripts watcher --interval 5 --tail
+gmux scripts notifier --webhook https://hooks.example.com/... --sound
+gmux scripts logger --rotate --compress
+```
+
+### Utility
+
+| Script | Description |
+|---|---|
+| `backup` | Backup sessions and config files |
+| `restore` | Restore from backup |
+| `diagnostics` | System health check |
+
+```sh
+gmux scripts backup --compress --keep-count 10
+gmux scripts restore --list
+gmux scripts diagnostics --verbose
+```
+
+### Script Options
+
+Common options for all scripts:
+
+| Option | Description |
+|---|---|
+| `--dry-run` | Show what would be done without doing it |
+| `--verbose` | Show detailed output |
+| `--force` | Skip confirmation prompts |
+| `--json` | Output as JSON |
+
 ## License
 
 MIT

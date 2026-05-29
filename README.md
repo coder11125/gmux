@@ -91,6 +91,8 @@ Commands:
   window <action>        Manage tmux windows
   pane <action>          Manage tmux panes
   git <action>           Git overlay commands
+  scripts [name]         Run or list bundled management scripts
+  completion <shell>     Print shell completion script (bash or zsh)
 ```
 
 ### Subcommands
@@ -126,6 +128,7 @@ Commands:
 | `git commit -m <msg>` | Create a commit in the active worktree. |
 | `git branch <name>` | Create and switch to a new branch. |
 | `git merge <branch>` | Merge a branch into the current branch. |
+| `completion <bash\|zsh>` | Print the shell completion script to stdout. Pipe to a file or source directly. |
 
 ### Agent selection
 

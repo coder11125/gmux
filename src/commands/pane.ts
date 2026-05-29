@@ -12,22 +12,17 @@ export async function splitPane(
   const format = "#{pane_id}:#{pane_width}:#{pane_height}:#{pane_current_command}:#{cursor_x}:#{cursor_y}";
   const target = targetPaneId ?? windowId;
 
-  // Build size argument
-  let sizeArg = "";
+  const args: string[] = ["tmux", "split-window", "-t", target, dirFlag];
   if (size !== undefined) {
     if (size > 0 && size < 1) {
-      // Percentage
-      const pct = Math.round(size * 100);
-      sizeArg = `-p ${pct}`;
+      args.push("-p", String(Math.round(size * 100)));
     } else {
-      // Cell count
-      sizeArg = `-l ${Math.round(size)}`;
+      args.push("-l", String(Math.round(size)));
     }
   }
+  args.push("-P", "-F", format);
 
-  const result = sizeArg
-    ? await $`tmux split-window -t ${target} ${dirFlag} ${sizeArg} -P -F ${format}`.nothrow()
-    : await $`tmux split-window -t ${target} ${dirFlag} -P -F ${format}`.nothrow();
+  const result = await $`${args}`.nothrow();
 
   if (result.exitCode !== 0) {
     const stderr = result.stderr.toString().trim();

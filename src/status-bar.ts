@@ -200,23 +200,25 @@ export class StatusBar {
    * otherwise it targets the currently focused pane.
    */
   async getPaneSegment(paneId?: string): Promise<StatusBarSegment> {
-    const target = paneId ? `-t ${paneId}` : "";
+    const baseArgs = paneId
+      ? ["tmux", "display-message", "-p", "-t", paneId]
+      : ["tmux", "display-message", "-p"];
     let width = "?";
     let height = "?";
     let command = "?";
 
     try {
-      const w = await $`tmux display-message -p ${target} "#{pane_width}"`.text();
+      const w = await $`${[...baseArgs, "#{pane_width}"]}`.text();
       width = w.trim();
     } catch { /* tmux may not be running */ }
 
     try {
-      const h = await $`tmux display-message -p ${target} "#{pane_height}"`.text();
+      const h = await $`${[...baseArgs, "#{pane_height}"]}`.text();
       height = h.trim();
     } catch { /* tmux may not be running */ }
 
     try {
-      const c = await $`tmux display-message -p ${target} "#{pane_current_command}"`.text();
+      const c = await $`${[...baseArgs, "#{pane_current_command}"]}`.text();
       command = c.trim();
     } catch { /* tmux may not be running */ }
 

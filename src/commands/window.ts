@@ -5,8 +5,10 @@ import type { WindowInfo, PaneInfo, TmuxLayout } from "../types.ts";
  * List all windows, optionally scoped to a session.
  */
 export async function listWindows(sessionName?: string): Promise<WindowInfo[]> {
-  const target = sessionName ? `-t ${sessionName}` : "";
-  const result = await $`tmux list-windows ${target} -F "#{window_id}:#{window_name}:#{window_index}:#{pane_count}"`.nothrow();
+  const args = ["tmux", "list-windows"];
+  if (sessionName) args.push("-t", sessionName);
+  args.push("-F", "#{window_id}:#{window_name}:#{window_index}:#{pane_count}");
+  const result = await $`${args}`.nothrow();
 
   if (result.exitCode !== 0) {
     const stderr = result.stderr.toString().trim();

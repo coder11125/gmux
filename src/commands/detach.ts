@@ -86,7 +86,15 @@ async function detachOne(store: SessionStore, sessionName: string): Promise<void
     }
   }
 
-  const result = await $`tmux detach-client -t ${record.tmuxPaneId}`.nothrow();
+  // Resolve the tmux session name from the window id so we can use
+  // `detach-client -s <session>` — detach-client's -t flag takes a
+  // client name (tty path), not a pane/window id.
+  const sessionResult = await $`tmux display-message -t ${record.tmuxWindowId} -p "#{session_name}"`.nothrow();
+  const tmuxSession = sessionResult.exitCode === 0
+    ? sessionResult.text().trim()
+    : record.tmuxWindowId;
+
+  const result = await $`tmux detach-client -s ${tmuxSession}`.nothrow();
   if (result.exitCode !== 0) {
     const stderr = result.stderr.toString().trim();
     if (stderr.includes("no client")) {

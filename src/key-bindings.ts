@@ -182,11 +182,45 @@ function buildTmuxBindCommand(binding: KeyBinding): string[] {
   );
 
   if (isTmuxNative) {
-    return ["tmux", "bind-key", "-T", "prefix", binding.key, binding.command];
+    // Split the command string into individual tokens so each argument is
+    // passed separately — interpolating the whole string as one element would
+    // cause Bun's $ to quote it as a single tmux argument.
+    return ["tmux", "bind-key", "-T", "prefix", binding.key, ...tokenizeCommand(binding.command)];
   }
 
   // Wrap shell commands with run-shell so tmux executes them in the background
   return ["tmux", "bind-key", "-T", "prefix", binding.key, "run-shell", binding.command];
+}
+
+/**
+ * Split a command string into tokens, respecting single- and double-quoted
+ * sections so quoted arguments are kept as a single token.
+ *
+ * e.g. `display-popup -E "git status"` → `["display-popup", "-E", "git status"]`
+ */
+function tokenizeCommand(cmd: string): string[] {
+  const tokens: string[] = [];
+  let current = "";
+  let inSingle = false;
+  let inDouble = false;
+
+  for (let i = 0; i < cmd.length; i++) {
+    const ch = cmd[i]!;
+    if (ch === "'" && !inDouble) {
+      inSingle = !inSingle;
+    } else if (ch === '"' && !inSingle) {
+      inDouble = !inDouble;
+    } else if (ch === " " && !inSingle && !inDouble) {
+      if (current.length > 0) {
+        tokens.push(current);
+        current = "";
+      }
+    } else {
+      current += ch;
+    }
+  }
+  if (current.length > 0) tokens.push(current);
+  return tokens;
 }
 
 /**

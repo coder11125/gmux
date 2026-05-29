@@ -167,7 +167,7 @@ program
         monitor.onIdle = async (idleName, _paneId) => {
           const record = await store.getSession(idleName);
           if (!record) return;
-          monitor.stop();
+          monitor.remove(idleName);
           await teardown.teardown({
             sessionName: idleName,
             worktreePath: record.worktreePath,

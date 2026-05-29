@@ -49,11 +49,14 @@ export class ProcessMonitor {
 
     this.render();
 
-    if (idle.length > 0 && this.onIdle) {
-      // Only tear down the first idle session. The onIdle callback calls
-      // monitor.stop() which halts further polling, so processing more
-      // than one would race on concurrent git/teardown mutations.
-      await this.onIdle(idle[0]!.sessionName, idle[0]!.paneId);
+    if (this.onIdle) {
+      for (const entry of idle) {
+        await this.onIdle(entry.sessionName, entry.paneId);
+      }
+    }
+
+    if (this.sessions.size === 0) {
+      this.stop();
     }
   }
 

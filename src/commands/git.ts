@@ -197,8 +197,8 @@ export async function detectConflicts(worktreePath: string): Promise<GitConflict
       let status: GitConflictFile["status"] = "both-modified";
       if (statusCode === "UU") status = "both-modified";
       else if (statusCode === "AA") status = "both-added";
-      else if (statusCode === "DU") status = "deleted-by-them";
-      else if (statusCode === "UD") status = "deleted-by-us";
+      else if (statusCode === "DU") status = "deleted-by-us";
+      else if (statusCode === "UD") status = "deleted-by-them";
       else if (statusCode === "UA") status = "added-by-them";
       else if (statusCode === "AU") status = "added-by-us";
 
@@ -291,10 +291,9 @@ export async function resolveConflict(
       await $`git checkout --ours -- ${filePath}`.cwd(worktreePath).nothrow();
     } else if (resolution === "theirs") {
       await $`git checkout --theirs -- ${filePath}`.cwd(worktreePath).nothrow();
-    } else {
-      await $`git checkout --add -- ${filePath}`.cwd(worktreePath).nothrow();
     }
-    await $`git add ${filePath}`.cwd(worktreePath).nothrow();
+    // For all resolutions (including "both"), stage the file in its current state.
+    await $`git add -- ${filePath}`.cwd(worktreePath).nothrow();
   } catch {
     // silent
   }

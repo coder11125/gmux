@@ -11,6 +11,7 @@ import { SessionStore } from "./session-store.ts";
 import { listSessions, type ListOptions } from "./commands/list.ts";
 import { doctorSessions, type DoctorOptions } from "./commands/doctor.ts";
 import { runScript, listScripts } from "./scripts.ts";
+import { getCompletion } from "./completion.ts";
 
 const program = new Command();
 
@@ -78,6 +79,19 @@ program
       process.exit(1);
     }
     await runScript(script, opts);
+  });
+
+program
+  .command("completion")
+  .description("Generate shell completion scripts")
+  .argument("<shell>", "shell type (bash or zsh)")
+  .action((shell: string) => {
+    const script = getCompletion(shell);
+    if (!script) {
+      console.error(`  error    Unsupported shell: ${shell}. Use bash or zsh.`);
+      process.exit(1);
+    }
+    console.log(script);
   });
 
 program
@@ -207,7 +221,7 @@ program
         const msg = err instanceof Error ? err.message : String(err);
         console.error(`\n  error    ${msg}`);
         for (const wt of createdWorktrees) {
-          await $`git worktree remove ${wt}`.nothrow();
+          await $`git worktree remove --force ${wt}`.nothrow();
         }
         await $`git worktree prune`.nothrow();
         process.exit(1);

@@ -1,8 +1,20 @@
-import { describe, it, expect, mock, beforeEach } from "bun:test";
+import { describe, it, expect, afterAll } from "bun:test";
 import { join } from "node:path";
+import { $ } from "../shell.ts";
 
 const PROJECT_ROOT = join(import.meta.dir, "..", "..");
 const CLI = join(PROJECT_ROOT, "src", "index.ts");
+
+afterAll(async () => {
+  const list = await $`git worktree list --porcelain`.nothrow();
+  if (list.exitCode !== 0) return;
+  for (const line of list.text().split("\n")) {
+    if (line.startsWith("worktree ") && line.includes("gmux-test-session")) {
+      await $`git worktree remove --force ${line.slice(9)}`.nothrow();
+    }
+  }
+  await $`git worktree prune`.nothrow();
+});
 
 function runCLI(...args: string[]): {
   exitCode: number;

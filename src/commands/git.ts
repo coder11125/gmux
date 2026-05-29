@@ -1,5 +1,7 @@
 import { $ } from "../shell.ts";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import Path from "node:path";
 import { GitOverlay } from "../git-overlay.ts";
 import type {
   GitOverlayState,
@@ -44,11 +46,12 @@ export async function showDiffInPane(
 ): Promise<void> {
   const diff = await overlay.getDiff(worktreePath, options);
   if (!diff) {
-    await $`tmux send-keys -t ${paneId} "echo 'No changes'" C-m`.nothrow();
+    await $`tmux send-keys -t ${paneId} ${"echo 'No changes'"} C-m`.nothrow();
     return;
   }
-  const escaped = diff.replace(/'/g, "'\\''");
-  await $`tmux send-keys -t ${paneId} "echo '${escaped}' | less -R" C-m`.nothrow();
+  const tmp = Path.join(tmpdir(), `gmux-viewer-${Date.now()}.txt`);
+  await writeFile(tmp, diff);
+  await $`tmux send-keys -t ${paneId} ${`less -R ${tmp}; rm -f ${tmp}`} C-m`.nothrow();
 }
 
 export async function showLogInPane(
@@ -58,11 +61,12 @@ export async function showLogInPane(
 ): Promise<void> {
   const log = await overlay.getLog(worktreePath, options);
   if (!log) {
-    await $`tmux send-keys -t ${paneId} "echo 'No commits'" C-m`.nothrow();
+    await $`tmux send-keys -t ${paneId} ${"echo 'No commits'"} C-m`.nothrow();
     return;
   }
-  const escaped = log.replace(/'/g, "'\\''");
-  await $`tmux send-keys -t ${paneId} "echo '${escaped}' | less -R" C-m`.nothrow();
+  const tmp = Path.join(tmpdir(), `gmux-viewer-${Date.now()}.txt`);
+  await writeFile(tmp, log);
+  await $`tmux send-keys -t ${paneId} ${`less -R ${tmp}; rm -f ${tmp}`} C-m`.nothrow();
 }
 
 export async function showBlameInPane(
@@ -72,11 +76,12 @@ export async function showBlameInPane(
 ): Promise<void> {
   const blame = await overlay.getBlame(worktreePath, { filePath });
   if (!blame) {
-    await $`tmux send-keys -t ${paneId} "echo 'No blame data'" C-m`.nothrow();
+    await $`tmux send-keys -t ${paneId} ${"echo 'No blame data'"} C-m`.nothrow();
     return;
   }
-  const escaped = blame.replace(/'/g, "'\\''");
-  await $`tmux send-keys -t ${paneId} "echo '${escaped}' | less -R" C-m`.nothrow();
+  const tmp = Path.join(tmpdir(), `gmux-viewer-${Date.now()}.txt`);
+  await writeFile(tmp, blame);
+  await $`tmux send-keys -t ${paneId} ${`less -R ${tmp}; rm -f ${tmp}`} C-m`.nothrow();
 }
 
 export async function openLogPager(
@@ -92,8 +97,7 @@ export async function openLogPager(
   if (options?.path) args.push("--", options.path);
 
   const cmd = args.join(" ") + " | less -R";
-  const escaped = cmd.replace(/'/g, "'\\''");
-  await $`tmux send-keys -t ${paneId} "${escaped}" C-m`.nothrow();
+  await $`tmux send-keys -t ${paneId} ${cmd} C-m`.nothrow();
 }
 
 export async function openDiffPager(
@@ -103,13 +107,21 @@ export async function openDiffPager(
 ): Promise<void> {
   const args = ["git", "diff"];
   if (options?.staged) args.push("--cached");
-  if (options?.commitHash) args.push(`${options.commitHash}~1..${options.commitHash}`);
+  if (options?.commitHash) {
+    const parentExists = (
+      await $`git rev-parse --verify ${options.commitHash}^`.cwd(worktreePath).nothrow()
+    ).exitCode === 0;
+    if (parentExists) {
+      args.push(`${options.commitHash}~1..${options.commitHash}`);
+    } else {
+      args.push("4b825dc642cb6eb9a060e54bf8d69288fbee4904", options.commitHash);
+    }
+  }
   if (options?.statOnly) args.push("--stat");
   if (options?.path) args.push("--", options.path);
 
   const cmd = args.join(" ") + " | less -R";
-  const escaped = cmd.replace(/'/g, "'\\''");
-  await $`tmux send-keys -t ${paneId} "${escaped}" C-m`.nothrow();
+  await $`tmux send-keys -t ${paneId} ${cmd} C-m`.nothrow();
 }
 
 // ---------------------------------------------------------------------------
@@ -277,8 +289,9 @@ export async function showConflictInPane(
     display += `>>>>>>> THEIRS\n\n`;
   }
 
-  const escaped = display.replace(/'/g, "'\\''");
-  await $`tmux send-keys -t ${paneId} "echo '${escaped}' | less -R" C-m`.nothrow();
+  const tmp = Path.join(tmpdir(), `gmux-viewer-${Date.now()}.txt`);
+  await writeFile(tmp, display);
+  await $`tmux send-keys -t ${paneId} ${`less -R ${tmp}; rm -f ${tmp}`} C-m`.nothrow();
 }
 
 export async function resolveConflict(

@@ -72,12 +72,16 @@ export class ConfigProvisioner {
   }
 
   private matchPattern(pattern: string, name: string): boolean {
+    // Protect ** before replacing single * so the second pass doesn't corrupt
+    // the .* that was just inserted for **.
+    const DOUBLE_STAR = "\x00";
     const regex = new RegExp(
       `^${pattern
         .replace(/[.+^${}()|[\]\\]/g, "\\$&")
-        .replace(/\*\*/g, ".*")
+        .replace(/\*\*/g, DOUBLE_STAR)
         .replace(/\*/g, "[^/]*")
-        .replace(/\?/g, "[^/]")}$`,
+        .replace(/\?/g, "[^/]")
+        .replace(/\x00/g, ".*")}$`,
     );
     return regex.test(name);
   }

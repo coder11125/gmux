@@ -52,7 +52,15 @@ export class GitOverlay {
       }
 
       if (options?.commitHash) {
-        args.push(`${options.commitHash}~1..${options.commitHash}`);
+        const parentExists = (
+          await $`git rev-parse --verify ${options.commitHash}^`.cwd(worktreePath).nothrow()
+        ).exitCode === 0;
+        if (parentExists) {
+          args.push(`${options.commitHash}~1..${options.commitHash}`);
+        } else {
+          // Root commit — diff against the empty tree object
+          args.push("4b825dc642cb6eb9a060e54bf8d69288fbee4904", options.commitHash);
+        }
       }
 
       if (options?.statOnly) {

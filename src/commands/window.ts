@@ -96,7 +96,7 @@ export async function createWindow(
   }
 
   // Fetch the window info to get name, index, and layout
-  const windowResult = await $`tmux list-windows -t ${windowId} -F "#{window_name}:#{window_index}"`.nothrow();
+  const windowResult = await $`tmux display-message -t ${windowId} -p "#{window_name}:#{window_index}"`.nothrow();
   const windowName = windowResult.exitCode === 0
     ? (windowResult.text().trim().split(":")[0] ?? sessionName)
     : sessionName;
@@ -202,7 +202,7 @@ export async function setLayout(windowId: string, layout: TmuxLayout): Promise<v
  * Get detailed info about a tmux window including its panes.
  */
 export async function getWindowInfo(windowId: string): Promise<WindowInfo> {
-  const windowResult = await $`tmux list-windows -t ${windowId} -F "#{window_id}:#{window_name}:#{window_index}"`.nothrow();
+  const windowResult = await $`tmux display-message -t ${windowId} -p "#{window_id}:#{window_name}:#{window_index}"`.nothrow();
 
   if (windowResult.exitCode !== 0) {
     const stderr = windowResult.stderr.toString().trim();

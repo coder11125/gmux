@@ -78,7 +78,7 @@ export class ConfigManager {
         showSessionInfo: true,
         showPaneInfo: true,
         showClock: true,
-        refreshInterval: 5,
+        refreshInterval: 5_000,
         format: "#[fg=white,bg=blue] #S #[fg=white,bg=green] #{git_branch} #{git_status} ",
       },
       keyBindings: [],
@@ -87,7 +87,7 @@ export class ConfigManager {
         enabled: true,
         showBranchInStatusBar: true,
         showDiffStat: true,
-        autoRefreshInterval: 10,
+        autoRefreshInterval: 10_000,
         diffViewerCommand: "less -R",
         logViewerCommand: "less -R",
       },
@@ -279,7 +279,7 @@ export class ConfigManager {
  */
 function isValidKeyFormat(key: string): boolean {
   // Allow bare single char, C-*, M-*, S-*, F* combos, or multi-char tokens
-  return /^[A-Za-z0-9-]+([+-][A-Za-z0-9]+)*$/.test(key) || key.length > 0;
+  return /^[A-Za-z0-9-]+([+-][A-Za-z0-9]+)*$/.test(key);
 }
 
 /**

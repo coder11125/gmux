@@ -190,7 +190,7 @@ export async function convertPaneToWindow(paneId: string): Promise<WindowInfo> {
   }
 
   // Fetch the new window's full info
-  const windowResult = await $`tmux list-windows -t ${windowId} -F "#{window_id}:#{window_name}:#{window_index}"`.nothrow();
+  const windowResult = await $`tmux display-message -t ${windowId} -p "#{window_id}:#{window_name}:#{window_index}"`.nothrow();
 
   if (windowResult.exitCode !== 0) {
     const stderr = windowResult.stderr.toString().trim();

@@ -91,79 +91,83 @@ export class SessionStore {
   private data = new Map<string, SessionRecord>();
 
   async addSession(record: SessionRecord): Promise<void> {
-    await this.load();
-    this.data.set(record.sessionName, record);
-    await this.flush();
+    await this.withLock(async () => {
+      await this.read();
+      this.data.set(record.sessionName, record);
+      await this.write();
+    });
   }
 
   async getSession(sessionName: string): Promise<SessionRecord | null> {
-    await this.load();
+    await this.withLock(async () => { await this.read(); });
     return this.data.get(sessionName) ?? null;
   }
 
   async listSessions(): Promise<SessionRecord[]> {
-    await this.load();
+    await this.withLock(async () => { await this.read(); });
     return Array.from(this.data.values());
   }
 
   async updateStatus(sessionName: string, status: SessionStatus): Promise<void> {
-    await this.load();
-    const record = this.data.get(sessionName);
-    if (!record) throw new Error(`Session '${sessionName}' not found`);
-    record.status = status;
-    await this.flush();
+    await this.withLock(async () => {
+      await this.read();
+      const record = this.data.get(sessionName);
+      if (!record) throw new Error(`Session '${sessionName}' not found`);
+      record.status = status;
+      await this.write();
+    });
   }
 
   async removeSession(sessionName: string): Promise<void> {
-    await this.load();
-    this.data.delete(sessionName);
-    await this.flush();
+    await this.withLock(async () => {
+      await this.read();
+      this.data.delete(sessionName);
+      await this.write();
+    });
   }
 
-  private async load(): Promise<void> {
+  // Holds the lock for the entire duration of fn so load→mutate→flush is atomic.
+  private async withLock<T>(fn: () => Promise<T>): Promise<T> {
     await acquireLock();
     try {
-      this.data.clear();
+      return await fn();
+    } finally {
+      await releaseLock();
+    }
+  }
 
-      try {
-        const raw = await readFile(storePath, "utf-8");
-        const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === "object") {
-          const skipped: string[] = [];
-          for (const [key, value] of Object.entries(parsed)) {
-            if (isValidSessionRecord(value)) {
-              this.data.set(key, value);
-            } else {
-              skipped.push(key);
-            }
-          }
-          if (skipped.length > 0) {
-            console.warn(
-              `  warn     Skipped ${skipped.length} invalid session record(s): ${skipped.join(", ")}`,
-            );
+  private async read(): Promise<void> {
+    this.data.clear();
+    try {
+      const raw = await readFile(storePath, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        const skipped: string[] = [];
+        for (const [key, value] of Object.entries(parsed)) {
+          if (isValidSessionRecord(value)) {
+            this.data.set(key, value);
+          } else {
+            skipped.push(key);
           }
         }
-      } catch (err: unknown) {
-        if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
+        if (skipped.length > 0) {
+          console.warn(
+            `  warn     Skipped ${skipped.length} invalid session record(s): ${skipped.join(", ")}`,
+          );
+        }
       }
-    } finally {
-      await releaseLock();
+    } catch (err: unknown) {
+      if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
     }
   }
 
-  private async flush(): Promise<void> {
-    await acquireLock();
-    try {
-      const obj: Record<string, SessionRecord> = {};
-      for (const [key, value] of this.data) {
-        obj[key] = value;
-      }
-
-      const tmpPath = storePath + ".tmp";
-      await writeFile(tmpPath, JSON.stringify(obj, null, 2), { mode: 0o644 });
-      await rename(tmpPath, storePath);
-    } finally {
-      await releaseLock();
+  private async write(): Promise<void> {
+    const obj: Record<string, SessionRecord> = {};
+    for (const [key, value] of this.data) {
+      obj[key] = value;
     }
+    const tmpPath = storePath + ".tmp";
+    await writeFile(tmpPath, JSON.stringify(obj, null, 2), { mode: 0o644 });
+    await rename(tmpPath, storePath);
   }
 }

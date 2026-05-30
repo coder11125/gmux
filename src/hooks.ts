@@ -140,6 +140,10 @@ export class HookManager {
 function substituteVars(template: string, vars: Record<string, string>): string {
   return template.replace(CONTEXT_VAR_RE, (match, named, positional) => {
     const key = named ?? positional;
-    return vars[key] ?? "";
+    return shellQuote(vars[key] ?? "");
   });
+}
+
+function shellQuote(value: string): string {
+  return "'" + value.replace(/'/g, "'\\''") + "'";
 }

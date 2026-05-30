@@ -7,7 +7,7 @@ import type { WindowInfo, PaneInfo, TmuxLayout } from "../types.ts";
 export async function listWindows(sessionName?: string): Promise<WindowInfo[]> {
   const args = ["tmux", "list-windows"];
   if (sessionName) args.push("-t", sessionName);
-  args.push("-F", "#{window_id}:#{window_name}:#{window_index}:#{pane_count}");
+  args.push("-F", "#{window_id}#{window_name}#{window_index}#{pane_count}");
   const result = await $`${args}`.nothrow();
 
   if (result.exitCode !== 0) {
@@ -26,7 +26,7 @@ export async function listWindows(sessionName?: string): Promise<WindowInfo[]> {
 
   const windows: WindowInfo[] = [];
   for (const line of output.split("\n")) {
-    const parts = line.split(":");
+    const parts = line.split("\x01");
     const windowId = parts[0] ?? "";
     const windowName = parts[1] ?? "";
     const windowIndex = parseInt(parts[2] ?? "0", 10);
@@ -96,12 +96,13 @@ export async function createWindow(
   }
 
   // Fetch the window info to get name, index, and layout
-  const windowResult = await $`tmux display-message -t ${windowId} -p "#{window_name}:#{window_index}"`.nothrow();
+  const winFmt = "#{window_name}#{window_index}";
+  const windowResult = await $`tmux display-message -t ${windowId} -p ${winFmt}`.nothrow();
   const windowName = windowResult.exitCode === 0
-    ? (windowResult.text().trim().split(":")[0] ?? sessionName)
+    ? (windowResult.text().trim().split("\x01")[0] ?? sessionName)
     : sessionName;
   const windowIndex = windowResult.exitCode === 0
-    ? parseInt(windowResult.text().trim().split(":")[1] ?? "0", 10)
+    ? parseInt(windowResult.text().trim().split("\x01")[1] ?? "0", 10)
     : 0;
 
   const layoutResult = await $`tmux display-message -t ${windowId} -p "#{window_layout}"`.nothrow();
@@ -116,8 +117,10 @@ export async function createWindow(
  * Kill a tmux window. Optionally force kill.
  */
 export async function killWindow(windowId: string, force?: boolean): Promise<void> {
-  const forceFlag = force ? "-f" : "";
-  const result = await $`tmux kill-window ${forceFlag} -t ${windowId}`.nothrow();
+  const args = ["tmux", "kill-window"];
+  if (force) args.push("-f");
+  args.push("-t", windowId);
+  const result = await $`${args}`.nothrow();
 
   if (result.exitCode !== 0) {
     const stderr = result.stderr.toString().trim();
@@ -202,7 +205,8 @@ export async function setLayout(windowId: string, layout: TmuxLayout): Promise<v
  * Get detailed info about a tmux window including its panes.
  */
 export async function getWindowInfo(windowId: string): Promise<WindowInfo> {
-  const windowResult = await $`tmux display-message -t ${windowId} -p "#{window_id}:#{window_name}:#{window_index}"`.nothrow();
+  const giFmt = "#{window_id}#{window_name}#{window_index}";
+  const windowResult = await $`tmux display-message -t ${windowId} -p ${giFmt}`.nothrow();
 
   if (windowResult.exitCode !== 0) {
     const stderr = windowResult.stderr.toString().trim();
@@ -210,7 +214,7 @@ export async function getWindowInfo(windowId: string): Promise<WindowInfo> {
   }
 
   const windowOutput = windowResult.text().trim();
-  const parts = windowOutput.split(":");
+  const parts = windowOutput.split("\x01");
   const windowIdStr = parts[0] ?? "";
   const windowName = parts[1] ?? "";
   const windowIndex = parseInt(parts[2] ?? "0", 10);

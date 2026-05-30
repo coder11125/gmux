@@ -23,7 +23,7 @@ describe("listWindows", () => {
       else o = mockStdout;
       const r = { exitCode: 0, text: () => o, stderr: Buffer.from("") }; const p = Promise.resolve(r); return Object.assign(p, { nothrow: () => p, cwd: () => shellChain() });
     });
-    mockStdout = "@1:main:0:1\n@2:editor:1:2";
+    mockStdout = "@1main01\n@2editor12";
     const windows = await listWindows();
     expect(windows).toHaveLength(2);
     expect(windows[0]!.windowId).toBe("@1");
@@ -45,8 +45,8 @@ describe("createWindow", () => {
 
   it("creates window and returns window info", async () => {
     $.mockImplementation((s: TemplateStringsArray, ...v: unknown[]) => {
-      let o = ""; const c = s.join("");
-      if (c.includes("list-windows")) o = "new-window:2";
+      let o = ""; let c = ""; for (let i = 0; i < s.length; i++) { c += s[i]!; if (i < v.length) { const x = v[i]; c += Array.isArray(x) ? x.join(" ") : String(x); } }
+      if (c.includes("window_name")) o = "new-window2";
       else if (c.includes("display-message")) o = "even-vertical";
       else o = "@3:p1";
       const r = { exitCode: 0, text: () => o, stderr: Buffer.from("") }; const p = Promise.resolve(r); return Object.assign(p, { nothrow: () => p, cwd: () => shellChain() });

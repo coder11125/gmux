@@ -71,7 +71,14 @@ async function acquireLock(): Promise<void> {
 }
 
 async function releaseLock(): Promise<void> {
-  await unlink(lockPath).catch(() => {});
+  try {
+    const raw = await readFile(lockPath, "utf-8");
+    if (parseInt(raw.trim(), 10) === process.pid) {
+      await unlink(lockPath).catch(() => {});
+    }
+  } catch {
+    // lock file already gone
+  }
 }
 
 function isPidAlive(pid: number): boolean {
@@ -99,13 +106,17 @@ export class SessionStore {
   }
 
   async getSession(sessionName: string): Promise<SessionRecord | null> {
-    await this.withLock(async () => { await this.read(); });
-    return this.data.get(sessionName) ?? null;
+    return this.withLock(async () => {
+      await this.read();
+      return this.data.get(sessionName) ?? null;
+    });
   }
 
   async listSessions(): Promise<SessionRecord[]> {
-    await this.withLock(async () => { await this.read(); });
-    return Array.from(this.data.values());
+    return this.withLock(async () => {
+      await this.read();
+      return Array.from(this.data.values());
+    });
   }
 
   async updateStatus(sessionName: string, status: SessionStatus): Promise<void> {

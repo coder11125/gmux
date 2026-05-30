@@ -54,6 +54,10 @@ export class TmuxManager {
     name: string,
     worktreePaths: string[],
   ): Promise<{ windowId: string; paneIds: string[] }> {
+    if (worktreePaths.length === 0) {
+      throw new Error("createWindowWithPanes requires at least one worktree path.");
+    }
+
     if (!(await this.isRunning())) {
       throw new Error("No tmux server is running. Start tmux first.");
     }

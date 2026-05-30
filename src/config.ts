@@ -279,7 +279,7 @@ export class ConfigManager {
  */
 function isValidKeyFormat(key: string): boolean {
   // Allow bare single char, C-*, M-*, S-*, F* combos, or multi-char tokens
-  return /^[A-Za-z0-9-]+([+-][A-Za-z0-9]+)*$/.test(key);
+  return /^[A-Za-z0-9][A-Za-z0-9-]*([+-][A-Za-z0-9][A-Za-z0-9-]*)*$/.test(key);
 }
 
 /**

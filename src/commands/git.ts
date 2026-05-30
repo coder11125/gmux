@@ -89,15 +89,14 @@ export async function openLogPager(
   paneId: string,
   options?: GitLogOptions,
 ): Promise<void> {
-  const args = ["git", "log"];
-  if (options?.oneline) args.push("--oneline");
-  if (options?.graph) args.push("--graph");
-  if (options?.count !== undefined && options.count > 0) args.push("-n", String(options.count));
-  if (options?.since) args.push(`--since=${options.since}`);
-  if (options?.path) args.push("--", options.path);
-
-  const cmd = args.join(" ") + " | less -R";
-  await $`tmux send-keys -t ${paneId} ${cmd} C-m`.nothrow();
+  const log = await overlay.getLog(worktreePath, options);
+  if (!log) {
+    await $`tmux send-keys -t ${paneId} ${"echo 'No commits'"} C-m`.nothrow();
+    return;
+  }
+  const tmp = Path.join(tmpdir(), `gmux-viewer-${Date.now()}.txt`);
+  await writeFile(tmp, log);
+  await $`tmux send-keys -t ${paneId} ${`less -R ${tmp}; rm -f ${tmp}`} C-m`.nothrow();
 }
 
 export async function openDiffPager(
@@ -105,23 +104,14 @@ export async function openDiffPager(
   paneId: string,
   options?: GitDiffOptions,
 ): Promise<void> {
-  const args = ["git", "diff"];
-  if (options?.staged) args.push("--cached");
-  if (options?.commitHash) {
-    const parentExists = (
-      await $`git rev-parse --verify ${options.commitHash}^`.cwd(worktreePath).nothrow()
-    ).exitCode === 0;
-    if (parentExists) {
-      args.push(`${options.commitHash}~1..${options.commitHash}`);
-    } else {
-      args.push("4b825dc642cb6eb9a060e54bf8d69288fbee4904", options.commitHash);
-    }
+  const diff = await overlay.getDiff(worktreePath, options);
+  if (!diff) {
+    await $`tmux send-keys -t ${paneId} ${"echo 'No changes'"} C-m`.nothrow();
+    return;
   }
-  if (options?.statOnly) args.push("--stat");
-  if (options?.path) args.push("--", options.path);
-
-  const cmd = args.join(" ") + " | less -R";
-  await $`tmux send-keys -t ${paneId} ${cmd} C-m`.nothrow();
+  const tmp = Path.join(tmpdir(), `gmux-viewer-${Date.now()}.txt`);
+  await writeFile(tmp, diff);
+  await $`tmux send-keys -t ${paneId} ${`less -R ${tmp}; rm -f ${tmp}`} C-m`.nothrow();
 }
 
 // ---------------------------------------------------------------------------
@@ -130,14 +120,15 @@ export async function openDiffPager(
 
 export async function stashList(worktreePath: string): Promise<GitStashEntry[]> {
   try {
-    const result = await $`git stash list --format="%gd|%gs|%gI"`.cwd(worktreePath).nothrow();
+    const fmt = "%gd%x01%gs%x01%gI";
+    const result = await $`git stash list --format=${fmt}`.cwd(worktreePath).nothrow();
     if (result.exitCode !== 0) return [];
 
     const entries: GitStashEntry[] = [];
     const lines = result.text().trim().split("\n").filter((l) => l.length > 0);
 
     for (const line of lines) {
-      const parts = line.split("|");
+      const parts = line.split("\x01");
       const ref = parts[0] ?? "";
       const message = parts[1] ?? "";
       const timestamp = parts[2] ?? "";
@@ -183,7 +174,8 @@ export async function stashPop(worktreePath: string, stashIndex?: number): Promi
 
 export async function stashDrop(worktreePath: string, stashIndex: number): Promise<void> {
   try {
-    await $`git stash drop stash@{${stashIndex}}`.cwd(worktreePath).nothrow();
+    const ref = `stash@{${stashIndex}}`;
+    await $`git stash drop ${ref}`.cwd(worktreePath).nothrow();
   } catch {
     // silent
   }
@@ -230,7 +222,7 @@ async function parseConflictMarkers(
   filePath: string,
 ): Promise<ConflictMarker[]> {
   try {
-    const content = await readFile(`${worktreePath}/${filePath}`, "utf-8");
+    const content = await readFile(Path.join(worktreePath, filePath), "utf-8");
     const lines = content.split("\n");
     const markers: ConflictMarker[] = [];
 
@@ -240,23 +232,26 @@ async function parseConflictMarkers(
         const startLine = i + 1;
         const ours: string[] = [];
         const theirs: string[] = [];
-        let endLine = startLine;
 
         i++;
         while (i < lines.length && !lines[i]?.startsWith("=======")) {
           ours.push(lines[i] ?? "");
           i++;
         }
-        if (i < lines.length) i++; // skip =======
+        const foundSeparator = i < lines.length;
+        if (foundSeparator) i++; // skip =======
 
         while (i < lines.length && !lines[i]?.startsWith(">>>>>>>")) {
           theirs.push(lines[i] ?? "");
           i++;
         }
-        endLine = i + 1;
-        if (i < lines.length) i++; // skip >>>>>>>
+        const endLine = i + 1;
+        const foundEnd = i < lines.length;
+        if (foundEnd) i++; // skip >>>>>>>
 
-        markers.push({ startLine, endLine, ours, theirs });
+        if (foundSeparator && foundEnd) {
+          markers.push({ startLine, endLine, ours, theirs });
+        }
       } else {
         i++;
       }
@@ -276,7 +271,7 @@ export async function showConflictInPane(
   const conflicts = await detectConflicts(worktreePath);
   const file = conflicts.find((c) => c.filePath === filePath);
   if (!file || file.markers.length === 0) {
-    await $`tmux send-keys -t ${paneId} "echo 'No conflicts found in ${filePath}'" C-m`.nothrow();
+    await $`tmux send-keys -t ${paneId} ${"echo 'No conflicts found'"} C-m`.nothrow();
     return;
   }
 

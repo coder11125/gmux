@@ -59,7 +59,7 @@ describe("GitOverlay", () => {
   });
 
   describe("getLastCommit", () => {
-    it("returns commit info", async () => { mockStdout = "abc1234|feat: add feature|2025-01-15"; const r = await overlay.getLastCommit("/tmp/worktree"); expect(r.hash).toBe("abc1234"); expect(r.message).toBe("feat: add feature"); });
+    it("returns commit info", async () => { mockStdout = "abc1234feat: add feature2025-01-15"; const r = await overlay.getLastCommit("/tmp/worktree"); expect(r.hash).toBe("abc1234"); expect(r.message).toBe("feat: add feature"); });
     it("returns empty on failure", async () => { mockExitCode = 1; mockStderr = "no commits"; const r = await overlay.getLastCommit("/tmp/worktree"); expect(r.hash).toBe(""); });
   });
 

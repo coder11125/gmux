@@ -119,14 +119,22 @@ program
       if (!agent) throw new Error("No agent configured. Set one via -A, .gmuxrc, or ~/.gmuxrc");
       const count = Math.max(1, parseInt(options.agents, 10) || 1);
       const createdWorktrees: string[] = [];
+      const createdWindows: string[] = [];
+      const createdSessionNames: string[] = [];
 
       let interrupted = false;
       const onSignal = async () => {
         if (interrupted) process.exit(1);
         interrupted = true;
         console.error("\n  interrupt  cleaning up...");
+        for (const winId of createdWindows) {
+          await $`tmux kill-window -t ${winId}`.nothrow();
+        }
+        for (const name of createdSessionNames) {
+          await store.removeSession(name).catch(() => {});
+        }
         for (const wt of createdWorktrees) {
-          await $`git worktree remove ${wt}`.nothrow();
+          await $`git worktree remove --force ${wt}`.nothrow();
         }
         await $`git worktree prune`.nothrow();
         process.exit(1);
@@ -177,6 +185,8 @@ program
               status: "running",
               startedAt: new Date().toISOString(),
             });
+            createdWindows.push(windowId);
+            createdSessionNames.push(inst.name);
 
             monitor.add(inst.name, paneId, agent);
           }
@@ -198,6 +208,8 @@ program
               status: "running",
               startedAt: new Date().toISOString(),
             });
+            createdWindows.push(windowId);
+            createdSessionNames.push(inst.name);
 
             monitor.add(inst.name, paneId, agent);
           }

@@ -9,7 +9,7 @@ export async function splitPane(
 ): Promise<PaneInfo> {
   const { windowId, direction, size, targetPaneId } = options;
   const dirFlag = direction === "horizontal" ? "-h" : "-v";
-  const format = "#{pane_id}:#{pane_width}:#{pane_height}:#{pane_current_command}:#{cursor_x}:#{cursor_y}";
+  const format = "#{pane_id}#{pane_width}#{pane_height}#{pane_current_command}#{cursor_x}#{cursor_y}";
   const target = targetPaneId ?? windowId;
 
   const args: string[] = ["tmux", "split-window", "-t", target, dirFlag];
@@ -30,7 +30,7 @@ export async function splitPane(
   }
 
   const output = result.text().trim();
-  const parts = output.split(":");
+  const parts = output.split("\x01");
   const paneId = parts[0] ?? "";
   const paneIndex = 0; // New pane, index determined after creation
   const width = parseInt(parts[1] ?? "0", 10);
@@ -56,8 +56,10 @@ export async function splitPane(
  * Kill a tmux pane. Optionally force kill.
  */
 export async function killPane(paneId: string, force?: boolean): Promise<void> {
-  const forceFlag = force ? "-f" : "";
-  const result = await $`tmux kill-pane ${forceFlag} -t ${paneId}`.nothrow();
+  const args = ["tmux", "kill-pane"];
+  if (force) args.push("-f");
+  args.push("-t", paneId);
+  const result = await $`${args}`.nothrow();
 
   if (result.exitCode !== 0) {
     const stderr = result.stderr.toString().trim();
@@ -146,7 +148,7 @@ export async function cyclePanes(
  * Get detailed info about a tmux pane.
  */
 export async function getPaneInfo(paneId: string): Promise<PaneInfo> {
-  const result = await $`tmux list-panes -t ${paneId} -F "#{pane_id}:#{pane_index}:#{pane_width}:#{pane_height}:#{pane_current_command}:#{cursor_x}:#{cursor_y}"`.nothrow();
+  const result = await $`tmux list-panes -t ${paneId} -F ${"#{pane_id}#{pane_index}#{pane_width}#{pane_height}#{pane_current_command}#{cursor_x}#{cursor_y}"}`.nothrow();
 
   if (result.exitCode !== 0) {
     const stderr = result.stderr.toString().trim();
@@ -154,7 +156,7 @@ export async function getPaneInfo(paneId: string): Promise<PaneInfo> {
   }
 
   const output = result.text().trim();
-  const parts = output.split(":");
+  const parts = output.split("\x01");
   const paneIdStr = parts[0] ?? "";
   const paneIndex = parseInt(parts[1] ?? "0", 10);
   const width = parseInt(parts[2] ?? "0", 10);
@@ -190,7 +192,8 @@ export async function convertPaneToWindow(paneId: string): Promise<WindowInfo> {
   }
 
   // Fetch the new window's full info
-  const windowResult = await $`tmux display-message -t ${windowId} -p "#{window_id}:#{window_name}:#{window_index}"`.nothrow();
+  const cvFmt = "#{window_id}#{window_name}#{window_index}";
+  const windowResult = await $`tmux display-message -t ${windowId} -p ${cvFmt}`.nothrow();
 
   if (windowResult.exitCode !== 0) {
     const stderr = windowResult.stderr.toString().trim();
@@ -198,7 +201,7 @@ export async function convertPaneToWindow(paneId: string): Promise<WindowInfo> {
   }
 
   const windowOutput = windowResult.text().trim();
-  const windowParts = windowOutput.split(":");
+  const windowParts = windowOutput.split("\x01");
   const finalWindowId = windowParts[0] ?? windowId;
   const windowName = windowParts[1] ?? "";
   const windowIndex = parseInt(windowParts[2] ?? "0", 10);

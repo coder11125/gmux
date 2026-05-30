@@ -215,9 +215,10 @@ export class GitOverlay {
 
   async getLastCommit(worktreePath: string): Promise<{ hash: string; message: string; timestamp: string }> {
     try {
-      const result = await $`git log -1 --format="%h|%s|%ai"`.cwd(worktreePath).nothrow();
+      const fmt = "%h%x01%s%x01%ai";
+      const result = await $`git log -1 --format=${fmt}`.cwd(worktreePath).nothrow();
       if (result.exitCode !== 0) return { hash: "", message: "", timestamp: "" };
-      const parts = result.text().trim().split("|");
+      const parts = result.text().trim().split("\x01");
       return {
         hash: parts[0] ?? "",
         message: parts[1] ?? "",

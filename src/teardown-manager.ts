@@ -59,9 +59,6 @@ export class TeardownManager {
     if (result.exitCode === 0) return true;
 
     const stderr = result.stderr.toString().trim();
-    const stdout = result.text().trim();
-
-    if (stdout.includes("Already up to date")) return true;
 
     if (
       stderr.includes("conflict") ||

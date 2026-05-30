@@ -17,7 +17,7 @@ describe("splitPane", () => {
 
   it("creates a new pane with horizontal split", async () => {
     $.mockImplementation((s: TemplateStringsArray, ...v: unknown[]) => {
-      let o = "%2:80:24:bash:0:0"; const c = s.join("");
+      let o = "%28024bash00"; const c = s.join("");
       if (c.includes("list-panes")) o = "1";
       const r = { exitCode: 0, text: () => o, stderr: Buffer.from("") }; const p = Promise.resolve(r); return Object.assign(p, { nothrow: () => p, cwd: () => shellChain() });
     });
@@ -30,7 +30,7 @@ describe("splitPane", () => {
 
   it("creates a new pane with vertical split", async () => {
     $.mockImplementation((s: TemplateStringsArray, ...v: unknown[]) => {
-      let o = "%3:40:12:zsh:5:3"; const c = s.join("");
+      let o = "%34012zsh53"; const c = s.join("");
       if (c.includes("list-panes")) o = "0";
       const r = { exitCode: 0, text: () => o, stderr: Buffer.from("") }; const p = Promise.resolve(r); return Object.assign(p, { nothrow: () => p, cwd: () => shellChain() });
     });
@@ -85,9 +85,9 @@ describe("convertPaneToWindow", () => {
 
   it("converts pane to window", async () => {
     $.mockImplementation((s: TemplateStringsArray, ...v: unknown[]) => {
-      let o = ""; const c = s.join("");
+      let o = ""; let c = ""; for (let i = 0; i < s.length; i++) { c += s[i]!; if (i < v.length) { const x = v[i]; c += Array.isArray(x) ? x.join(" ") : String(x); } }
       if (c.includes("break-pane")) o = "@5:%2";
-      else if (c.includes("list-windows")) o = "@5:new-window:3";
+      else if (c.includes("window_name")) o = "@5new-window3";
       else if (c.includes("list-panes")) o = "%2";
       else if (c.includes("display-message")) o = "tiled";
       const r = { exitCode: 0, text: () => o, stderr: Buffer.from("") }; const p = Promise.resolve(r); return Object.assign(p, { nothrow: () => p, cwd: () => shellChain() });

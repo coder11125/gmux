@@ -237,7 +237,7 @@ gmux can be configured via `~/.gmux/config.json`:
 
 ## Scripts
 
-gmux includes Ruby scripts for session management, git automation, monitoring, and utilities.
+gmux includes bundled scripts for session management, git automation, monitoring, and utilities. Monitoring scripts are written in Python for superior logging and integration capabilities; others are Ruby.
 
 ### Running Scripts
 
@@ -280,11 +280,13 @@ gmux scripts pr-ready --skip-tests --force
 
 ### Monitoring
 
+Monitoring scripts are implemented in **Python** for better logging, HTTP/webhook support, and external service integrations.
+
 | Script | Description |
 |---|---|
-| `watcher` | Monitor agent output for errors |
-| `notifier` | Send notifications on session events |
-| `logger` | Capture tmux pane output to files |
+| `watcher` | Monitor agent output for errors (error pattern detection, logging) |
+| `notifier` | Send notifications on session events (webhook, Slack, Discord, Telegram, email, sound) |
+| `logger` | Capture tmux pane output to files (with rotation and compression) |
 
 ```sh
 gmux scripts watcher --interval 5 --tail

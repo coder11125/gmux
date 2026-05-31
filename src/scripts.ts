@@ -153,7 +153,9 @@ export async function runScript(
   }
 
   const scriptDir = Path.join(SCRIPTS_DIR, script.category);
-  const scriptPath = Path.join(scriptDir, `${scriptName}.rb`);
+  const isMonitoring = script.category === "monitoring";
+  const extension = isMonitoring ? ".py" : ".rb";
+  const scriptPath = Path.join(scriptDir, `${scriptName}${extension}`);
 
   // Build command arguments
   const args: string[] = [];
@@ -208,7 +210,8 @@ export async function runScript(
 
   try {
     console.log(`  run      ${scriptName}`);
-    const result = await $`ruby ${scriptPath} ${args}`.text();
+    const runtime = isMonitoring ? "python3" : "ruby";
+    const result = await $`${runtime} ${scriptPath} ${args}`.text();
     console.log(result);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

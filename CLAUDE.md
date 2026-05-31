@@ -56,7 +56,7 @@ bun test --test-name-pattern "list sessions"
 | `src/hooks.ts` | `HookManager`: fires user-defined shell commands on gmux lifecycle events (session create, pane kill, git ops, etc.) |
 | `src/key-bindings.ts` | `KeyBindingManager`: applies custom tmux key bindings from config; exports bindings in `tmux.conf` syntax |
 | `src/status-bar.ts` | Renders git overlay + session info into the tmux status line |
-| `src/scripts.ts` | Backs `gmux scripts`: discovers and runs bundled Ruby scripts across session, git, monitoring, and utility categories |
+| `src/scripts.ts` | Backs `gmux scripts`: discovers and runs bundled management scripts (Python for monitoring, Ruby for others) |
 | `src/completion.ts` | Generates embedded bash/zsh completion scripts returned by `gmux completion <shell>` |
 | `src/shell.ts` | Re-exports Bun's `$` from a named module so tests can intercept it via `mock.module` |
 | `src/commands/` | Subcommand implementations: `list`, `doctor`, `git`, `pane`, `window`, `attach`, `detach`, `kill`, `rename` |
@@ -76,7 +76,7 @@ bun test --test-name-pattern "list sessions"
 | `gmux git <subcommand>` | Git overlay: `status`, `diff`, `log`, `blame`, `stash`, `conflict` |
 | `gmux pane <subcommand>` | Pane management: split, focus, resize, convert |
 | `gmux window <subcommand>` | Window management: create, focus, move, list |
-| `gmux scripts [name] [--list]` | Run or list bundled Ruby management scripts |
+| `gmux scripts [name] [--list]` | Run or list bundled management scripts |
 | `gmux completion <bash\|zsh>` | Print shell completion script to stdout |
 
 ### Agent resolution

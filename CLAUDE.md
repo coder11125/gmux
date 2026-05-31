@@ -5,10 +5,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# Build self-contained binary to dist/gmux
+# Build both binaries: dist/gmux-monitor (Go) + dist/gmux (Bun)
 bun run build
 
-# Run from source
+# Build only the Go monitor binary
+bun run build:go   # cd go && go build -o ../dist/gmux-monitor ./cmd/gmux-monitor/
+
+# Run from source (uses TypeScript polling fallback — no Go binary needed)
 bun run start
 
 # Type-check (no emit)
@@ -34,7 +37,7 @@ bun test --test-name-pattern "list sessions"
 2. `ConfigProvisioner` copies config files (`.env`, editor configs, etc.) into the new worktree.
 3. `TmuxManager` creates a tmux window (or split panes via `createWindowWithPanes`) targeting that worktree path.
 4. `AgentExecutor` dispatches the prompt via `tmux send-keys`, resolving the agent command from `.gmuxrc` → repo root `.gmuxrc` → `~/.gmuxrc`.
-5. `ProcessMonitor` polls every 2 s, walking the process tree from the tmux pane PID to detect when the agent process exits.
+5. `ProcessMonitor` spawns one `gmux-monitor` (Go) process per session; it polls every 500 ms and prints `idle` when the agent exits. Falls back to TypeScript polling at 2 s if the binary is absent.
 6. `TeardownManager` fires on idle: prompts to merge the branch into the current branch (or auto-merges with `--auto-merge`), removes the worktree, and kills the tmux window.
 7. `SessionStore` persists `SessionRecord` objects to `~/.gmux/sessions.json` under a PID-based file lock (`~/.gmux/sessions.json.lock`).
 
@@ -47,7 +50,8 @@ bun test --test-name-pattern "list sessions"
 | `src/session-store.ts` | Atomic read-modify-write store backed by `~/.gmux/sessions.json` |
 | `src/agent-executor.ts` | Resolves agent from `.gmuxrc`, shell-quotes prompt, calls `tmux send-keys` |
 | `src/git-worktree-manager.ts` | `git worktree add/remove/prune` wrapper |
-| `src/process-monitor.ts` | Interval-based process-tree walker; fires `onIdle` callback |
+| `src/process-monitor.ts` | Spawns `gmux-monitor` (Go) per session to watch process tree; fires `onIdle` when idle; falls back to 2 s TypeScript polling |
+| `go/cmd/gmux-monitor/main.go` | Go binary: polls pane process tree at 500 ms, prints `idle` and exits when agent is gone |
 | `src/teardown-manager.ts` | Merge prompt, worktree cleanup, tmux window kill |
 | `src/tmux-manager.ts` | Window/pane creation helpers |
 | `src/config-provisioner.ts` | Copies config files into new worktrees; handles `**` glob patterns |

@@ -44,17 +44,19 @@ gmux git diff                                      # show diff in a tmux pane
 3. `tmux new-window` — opens a new tmux window (or `split-window` with `-p`) with the worktree as its working directory
 4. `tmux send-keys` — dispatches the agent command (`pi`, `aider`, `claude-code`, etc.) into the pane
 5. `SessionStore` — persists state to `~/.gmux/sessions.json`
-6. `ProcessMonitor` — polls every 2s and renders a live `[● session]` status bar; when a session finishes, runs teardown (merge prompt, worktree removal, window kill)
+6. `ProcessMonitor` — spawns one `gmux-monitor` (Go) process per session; it polls the pane's process tree every 500 ms and writes `idle` to stdout when the agent exits. Falls back to TypeScript polling at 2 s if the binary is not found. Renders a live `[● session]` status bar; teardown fires on idle (merge prompt, worktree removal, window kill).
 
 Any agent that accepts a prompt on the command line works out of the box — **OpenAI Codex**, **pi**, **aider**, **Claude Code**, and more.
 
 ## Install
 
+**Prerequisites:** [Bun](https://bun.sh) and [Go](https://go.dev) (≥ 1.21)
+
 ```sh
 git clone https://github.com/coder11125/gmux
 cd gmux
 bun install
-bun run build    # produces ./dist/gmux
+bun run build    # compiles dist/gmux-monitor (Go) then dist/gmux (Bun)
 ```
 
 Or link globally:

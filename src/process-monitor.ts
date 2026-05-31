@@ -1,4 +1,6 @@
 import { $ } from "./shell.ts";
+import { spawn } from "node:child_process";
+import Path from "node:path";
 
 export type IdleCallback = (sessionName: string, paneId: string) => void | Promise<void>;
 
@@ -9,6 +11,26 @@ interface SessionEntry {
   running: boolean;
 }
 
+// Resolve gmux-monitor binary: next to this script in dev, next to the gmux
+// binary in production (both live in dist/).
+function resolveMonitorBin(): string {
+  const candidates = [
+    Path.join(Path.dirname(Bun.argv[1]!), "gmux-monitor"),
+    Path.join(import.meta.dir, "..", "dist", "gmux-monitor"),
+  ];
+  for (const p of candidates) {
+    try {
+      const stat = Bun.file(p);
+      if (stat.size > 0) return p;
+    } catch {
+      // not found — try next
+    }
+  }
+  return ""; // signals fallback to TypeScript polling
+}
+
+const MONITOR_BIN = resolveMonitorBin();
+
 export class ProcessMonitor {
   private sessions: Map<string, SessionEntry> = new Map();
   private intervalId: ReturnType<typeof setInterval> | null = null;
@@ -16,7 +38,12 @@ export class ProcessMonitor {
 
   add(sessionName: string, paneId: string, agent: string): void {
     const processName = agent.split(/\s+/)[0]!.split("/").pop()!;
-    this.sessions.set(sessionName, { sessionName, paneId, processName, running: true });
+    const entry: SessionEntry = { sessionName, paneId, processName, running: true };
+    this.sessions.set(sessionName, entry);
+
+    if (MONITOR_BIN) {
+      this.watchWithGo(entry);
+    }
   }
 
   remove(sessionName: string): void {
@@ -25,7 +52,10 @@ export class ProcessMonitor {
 
   start(): void {
     this.render();
-    this.intervalId = setInterval(() => this.poll(), 2000);
+    if (!MONITOR_BIN) {
+      // Fallback: TypeScript polling at 2 s intervals
+      this.intervalId = setInterval(() => this.poll(), 2000);
+    }
   }
 
   stop(): void {
@@ -35,6 +65,43 @@ export class ProcessMonitor {
     }
     process.stdout.write("\r\x1b[K");
   }
+
+  // ---------------------------------------------------------------------------
+  // Go-backed path: spawn one gmux-monitor per session
+  // ---------------------------------------------------------------------------
+
+  private watchWithGo(entry: SessionEntry): void {
+    const child = spawn(MONITOR_BIN, [
+      "--pane-id", entry.paneId,
+      "--process", entry.processName,
+      "--interval", "500ms",
+    ]);
+
+    child.stdout.on("data", async (chunk: Buffer) => {
+      if (chunk.toString().trim() === "idle") {
+        entry.running = false;
+        this.render();
+        this.sessions.delete(entry.sessionName);
+        if (this.onIdle) {
+          await this.onIdle(entry.sessionName, entry.paneId);
+        }
+        if (this.sessions.size === 0) {
+          this.stop();
+        }
+      }
+    });
+
+    child.on("error", () => {
+      // Go binary unavailable at runtime — fall back to polling for this entry
+      if (!this.intervalId) {
+        this.intervalId = setInterval(() => this.poll(), 2000);
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // TypeScript fallback path (used when gmux-monitor is not available)
+  // ---------------------------------------------------------------------------
 
   private async poll(): Promise<void> {
     const idle: SessionEntry[] = [];
@@ -105,7 +172,7 @@ export class ProcessMonitor {
   private render(): void {
     const parts: string[] = [];
     for (const entry of this.sessions.values()) {
-      const dot = entry.running ? "\u25cf" : "\u25cb";
+      const dot = entry.running ? "●" : "○";
       parts.push(`[${dot} ${entry.sessionName}]`);
     }
     process.stdout.write(`\r\x1b[K${parts.join(" ")}`);

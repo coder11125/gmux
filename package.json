@@ -8,7 +8,8 @@
     "gmux": "./dist/gmux"
   },
   "scripts": {
-    "build": "bun build --compile --outfile dist/gmux src/index.ts",
+    "build": "bun run build:go && bun build --compile --outfile dist/gmux src/index.ts",
+    "build:go": "cd go && go build -o ../dist/gmux-monitor ./cmd/gmux-monitor/",
     "start": "bun run src/index.ts"
   },
   "dependencies": {

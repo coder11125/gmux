@@ -12,6 +12,7 @@ gmux doctor                                        # repair stale state
 gmux attach my-feature                             # attach to a running session
 gmux diff my-feature                               # show everything the agent changed vs base branch
 gmux diff my-feature --stat                        # file-level summary only
+gmux update                                          # update gmux to latest version
 gmux git status                                    # show git status for active worktree
 gmux git diff                                      # show diff in a tmux pane
 ```
@@ -58,7 +59,7 @@ Any agent that accepts a prompt on the command line works out of the box — **O
 git clone https://github.com/coder11125/gmux
 cd gmux
 bun install
-bun run build    # compiles dist/gmux-monitor (Go) then dist/gmux (Bun)
+bun run build    # compiles dist/gmux-monitor (Go), dist/gmux-update (Go), then dist/gmux (Bun)
 ```
 
 Or link globally:
@@ -96,6 +97,7 @@ Commands:
   pane <action>          Manage tmux panes
   git <action>           Git overlay commands
   scripts [name]         Run or list bundled management scripts
+  update [options]       Update gmux from GitHub
   completion <shell>     Print shell completion script (bash or zsh)
 ```
 
@@ -134,6 +136,7 @@ Commands:
 | `git branch <name>` | Create and switch to a new branch. |
 | `git merge <branch>` | Merge a branch into the current branch. |
 | `completion <bash\|zsh>` | Print the shell completion script to stdout. Pipe to a file or source directly. |
+| `update` | Update gmux to the latest version from GitHub (`--force`, `--dry-run`, `--version`) |
 
 ### Agent selection
 

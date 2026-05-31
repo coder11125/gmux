@@ -13,6 +13,7 @@ import { doctorSessions, type DoctorOptions } from "./commands/doctor.ts";
 import { sessionDiff, showSessionDiffInPager, type DiffOptions } from "./commands/diff.ts";
 import { runScript, listScripts } from "./scripts.ts";
 import { getCompletion } from "./completion.ts";
+import { runUpdate } from "./commands/update.ts";
 
 const program = new Command();
 
@@ -80,6 +81,16 @@ program
       process.exit(1);
     }
     await runScript(script, opts);
+  });
+
+program
+  .command("update")
+  .description("Update gmux to the latest version")
+  .option("--force", "re-download even if same version")
+  .option("--dry-run", "check for update without making changes")
+  .option("--version <tag>", "install a specific version (e.g. v0.2.0)")
+  .action(async (opts: { force?: boolean; dryRun?: boolean; version?: string }) => {
+    await runUpdate(opts);
   });
 
 program

@@ -58,8 +58,8 @@ If neither path exists it falls back to the original TypeScript polling loop at
 # Via npm script (also runs as part of `bun run build`)
 bun run build:go
 
-# Directly
-cd go && go build -o ../dist/gmux-monitor ./cmd/gmux-monitor/
+# Directly (builds both binaries)
+cd go && go build -ldflags="-X main.version=$(git describe --tags --always --dirty 2>/dev/null || echo dev)" -o ../dist/gmux-update ./cmd/gmux-update/ && go build -o ../dist/gmux-monitor ./cmd/gmux-monitor/
 ```
 
 ## Source
@@ -68,6 +68,8 @@ cd go && go build -o ../dist/gmux-monitor ./cmd/gmux-monitor/
 go/
 ├── go.mod
 └── cmd/
-    └── gmux-monitor/
+    ├── gmux-monitor/
+    │   └── main.go
+    └── gmux-update/
         └── main.go
 ```

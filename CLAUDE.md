@@ -5,11 +5,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# Build both binaries: dist/gmux-monitor (Go) + dist/gmux (Bun)
+# Build all binaries: dist/gmux-monitor (Go) + dist/gmux-update (Go) + dist/gmux (Bun)
 bun run build
 
-# Build only the Go monitor binary
-bun run build:go   # cd go && go build -o ../dist/gmux-monitor ./cmd/gmux-monitor/
+# Build only the Go binaries
+bun run build:go   # builds both gmux-monitor and gmux-update into dist/
+#   cd go && go build -ldflags="-X main.version=..." -o ../dist/gmux-update ./cmd/gmux-update/ && go build -o ../dist/gmux-monitor ./cmd/gmux-monitor/
 
 # Run from source (uses TypeScript polling fallback — no Go binary needed)
 bun run start
@@ -51,6 +52,8 @@ bun test --test-name-pattern "list sessions"
 | `src/agent-executor.ts` | Resolves agent from `.gmuxrc`, shell-quotes prompt, calls `tmux send-keys` |
 | `src/git-worktree-manager.ts` | `git worktree add/remove/prune` wrapper |
 | `src/process-monitor.ts` | Spawns `gmux-monitor` (Go) per session to watch process tree; fires `onIdle` when idle; falls back to 2 s TypeScript polling |
+| `src/commands/update.ts` | `gmux update` CLI command; resolves and spawns the Go updater binary |
+| `go/cmd/gmux-update/main.go` | Go binary: fetches latest GitHub release, verifies SHA256 checksum, atomically swaps gmux + gmux-monitor |
 | `go/cmd/gmux-monitor/main.go` | Go binary: polls pane process tree at 500 ms, prints `idle` and exits when agent is gone |
 | `src/teardown-manager.ts` | Merge prompt, worktree cleanup, tmux window kill |
 | `src/tmux-manager.ts` | Window/pane creation helpers |
@@ -78,6 +81,7 @@ bun test --test-name-pattern "list sessions"
 | `gmux kill <session>` | Kill session, remove worktree, and close tmux window |
 | `gmux rename <session> <new-name>` | Rename a tracked session |
 | `gmux diff <session> [--stat] [--staged] [--base <branch>] [--path <path>] [--no-pager]` | Show all agent changes vs base branch (committed + uncommitted) |
+| `gmux update [--force] [--dry-run] [--version <tag>]` | Update gmux to the latest (or specific) version from GitHub |
 | `gmux git <subcommand>` | Git overlay: `status`, `diff`, `log`, `blame`, `stash`, `conflict` |
 | `gmux pane <subcommand>` | Pane management: split, focus, resize, convert |
 | `gmux window <subcommand>` | Window management: create, focus, move, list |

@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "bun run build:go && bun build --compile --outfile dist/gmux src/index.ts",
-    "build:go": "cd go && go build -o ../dist/gmux-monitor ./cmd/gmux-monitor/",
+    "build:go": "cd go && go build -ldflags=\"-X main.version=$(git describe --tags --always --dirty 2>/dev/null || echo dev)\" -o ../dist/gmux-update ./cmd/gmux-update/ && go build -o ../dist/gmux-monitor ./cmd/gmux-monitor/",
     "start": "bun run src/index.ts"
   },
   "dependencies": {

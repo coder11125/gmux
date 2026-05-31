@@ -11,8 +11,16 @@ gmux scripts <script-name> [options] # run a specific script
 
 ## Implementation
 
-- **Monitoring scripts** — Python (superior logging frameworks, HTTP/webhook support, external service integrations)
-- **Other scripts** — Ruby (session, git, utility categories)
+Scripts use different runtimes by category based on language fit:
+
+| Category | Runtime | Reason |
+|----------|---------|--------|
+| Session | Python | Data processing (`datetime`, `json`), file operations (`pathlib`, `shutil`) |
+| Monitoring | Python | Logging frameworks, HTTP/webhook support, external service integrations |
+| Utility | Python | Archive handling (`shutil.make_archive`, `tarfile`), system checks (`platform`, `shutil.which`) |
+| Git | Ruby | Git subprocess orchestration; backtick syntax + `$?` is more concise than Python's `subprocess.run()` |
+
+The runtime is resolved in `src/scripts.ts` based on `script.category`. Session, monitoring, and utility scripts use `python3`; only git scripts use `ruby`.
 
 ## Session Management
 

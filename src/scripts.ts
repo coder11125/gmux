@@ -153,9 +153,12 @@ export async function runScript(
   }
 
   const scriptDir = Path.join(SCRIPTS_DIR, script.category);
-  const isMonitoring = script.category === "monitoring";
-  const extension = isMonitoring ? ".py" : ".rb";
-  const scriptPath = Path.join(scriptDir, `${scriptName}${extension}`);
+  // Only git scripts remain in Ruby; all others migrated to Python
+  let ext = ".py";
+  if (script.category === "git") {
+    ext = ".rb";
+  }
+  const scriptPath = Path.join(scriptDir, `${scriptName}${ext}`);
 
   // Build command arguments
   const args: string[] = [];
@@ -210,7 +213,7 @@ export async function runScript(
 
   try {
     console.log(`  run      ${scriptName}`);
-    const runtime = isMonitoring ? "python3" : "ruby";
+    const runtime = script.category === "git" ? "ruby" : "python3";
     const result = await $`${runtime} ${scriptPath} ${args}`.text();
     console.log(result);
   } catch (err: unknown) {

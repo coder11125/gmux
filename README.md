@@ -242,7 +242,7 @@ gmux can be configured via `~/.gmux/config.json`:
 
 ## Scripts
 
-gmux includes bundled scripts for session management, git automation, monitoring, and utilities. Monitoring scripts are written in Python for superior logging and integration capabilities; others are Ruby.
+gmux includes bundled scripts for session management, git automation, monitoring, and utilities. Most scripts are written in Python (session, monitoring, utility); only git automation scripts remain in Ruby.
 
 ### Running Scripts
 
@@ -285,7 +285,7 @@ gmux scripts pr-ready --skip-tests --force
 
 ### Monitoring
 
-Monitoring scripts are implemented in **Python** for better logging, HTTP/webhook support, and external service integrations.
+Monitoring scripts are implemented in **Python** for better logging, HTTP/webhook support, and external service integrations. Session and utility scripts have also been migrated to Python for richer stdlib support (`shutil`, `tarfile`, `platform`, `pathlib`). Only git automation scripts (`auto-commit`, `branch-cleanup`, `conflict-helper`, `pr-ready`) remain in Ruby.
 
 | Script | Description |
 |---|---|

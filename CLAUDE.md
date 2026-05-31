@@ -60,7 +60,7 @@ bun test --test-name-pattern "list sessions"
 | `src/hooks.ts` | `HookManager`: fires user-defined shell commands on gmux lifecycle events (session create, pane kill, git ops, etc.) |
 | `src/key-bindings.ts` | `KeyBindingManager`: applies custom tmux key bindings from config; exports bindings in `tmux.conf` syntax |
 | `src/status-bar.ts` | Renders git overlay + session info into the tmux status line |
-| `src/scripts.ts` | Backs `gmux scripts`: discovers and runs bundled management scripts (Python for monitoring, Ruby for others) |
+| `src/scripts.ts` | Backs `gmux scripts`: discovers and runs bundled management scripts (Python for session, monitoring, and utility; Ruby for git only) |
 | `src/completion.ts` | Generates embedded bash/zsh completion scripts returned by `gmux completion <shell>` |
 | `src/shell.ts` | Re-exports Bun's `$` from a named module so tests can intercept it via `mock.module` |
 | `src/commands/` | Subcommand implementations: `list`, `doctor`, `git`, `pane`, `window`, `attach`, `detach`, `kill`, `rename` |
@@ -93,6 +93,19 @@ Agent command is read from the first `.gmuxrc` JSON file found at: `cwd/.gmuxrc`
 - Window IDs use the `@N` format; pane IDs use `%N`.
 - `tmux display-message` (not `list-windows`) is used for per-window/pane queries to avoid scoping issues.
 - Commands with multiple tokens are passed as arrays to Bun's `$` tagged template to avoid shell-quoting bugs.
+
+### Script language split
+
+Bundled management scripts live under `scripts/` and use different runtimes by category:
+
+| Category | Runtime | Scripts |
+|----------|---------|--------|
+| Session | Python | `cleanup`, `health`, `export`, `stats` |
+| Monitoring | Python | `watcher`, `notifier`, `logger` |
+| Utility | Python | `backup`, `restore`, `diagnostics` |
+| Git | Ruby | `auto-commit`, `branch-cleanup`, `conflict-helper`, `pr-ready` |
+
+The runtime is resolved in `src/scripts.ts` based on `script.category`. Only git scripts remain in Ruby; all others have been migrated to Python for better stdlib support (`shutil`, `tarfile`, `platform`, `pathlib`).
 
 ### Persistence
 

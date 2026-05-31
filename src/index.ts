@@ -10,6 +10,7 @@ import { TeardownManager } from "./teardown-manager.ts";
 import { SessionStore } from "./session-store.ts";
 import { listSessions, type ListOptions } from "./commands/list.ts";
 import { doctorSessions, type DoctorOptions } from "./commands/doctor.ts";
+import { sessionDiff, showSessionDiffInPager, type DiffOptions } from "./commands/diff.ts";
 import { runScript, listScripts } from "./scripts.ts";
 import { getCompletion } from "./completion.ts";
 
@@ -92,6 +93,33 @@ program
       process.exit(1);
     }
     console.log(script);
+  });
+
+program
+  .command("diff <session>")
+  .description("Show what an agent has changed in its worktree vs the base branch")
+  .option("--stat", "show file-level summary only")
+  .option("--staged", "show only staged changes")
+  .option("--base <branch>", "compare against this branch (default: auto-detect main/master)")
+  .option("--path <path>", "restrict diff to a file or directory")
+  .option("--no-pager", "print raw diff to stdout instead of opening less")
+  .action(async (sessionName: string, opts: DiffOptions & { pager?: boolean }) => {
+    const store = new SessionStore();
+    const record = await store.getSession(sessionName);
+    if (!record) {
+      console.error(`  error    Session '${sessionName}' not found`);
+      process.exit(1);
+    }
+    if (opts.pager === false) {
+      const diff = await sessionDiff(record.worktreePath, opts);
+      if (!diff) {
+        console.log("  No changes found.");
+      } else {
+        process.stdout.write(diff);
+      }
+    } else {
+      await showSessionDiffInPager(record.worktreePath, opts);
+    }
   });
 
 program

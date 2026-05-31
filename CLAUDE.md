@@ -77,6 +77,7 @@ bun test --test-name-pattern "list sessions"
 | `gmux detach [session]` | Detach the current tmux client |
 | `gmux kill <session>` | Kill session, remove worktree, and close tmux window |
 | `gmux rename <session> <new-name>` | Rename a tracked session |
+| `gmux diff <session> [--stat] [--staged] [--base <branch>] [--path <path>] [--no-pager]` | Show all agent changes vs base branch (committed + uncommitted) |
 | `gmux git <subcommand>` | Git overlay: `status`, `diff`, `log`, `blame`, `stash`, `conflict` |
 | `gmux pane <subcommand>` | Pane management: split, focus, resize, convert |
 | `gmux window <subcommand>` | Window management: create, focus, move, list |

@@ -10,6 +10,8 @@ gmux my-feature "Add tests" -A claude-code -a 4 -p   # 4 claude-code agents, 1 w
 gmux list                                          # show tracked sessions
 gmux doctor                                        # repair stale state
 gmux attach my-feature                             # attach to a running session
+gmux diff my-feature                               # show everything the agent changed vs base branch
+gmux diff my-feature --stat                        # file-level summary only
 gmux git status                                    # show git status for active worktree
 gmux git diff                                      # show diff in a tmux pane
 ```
@@ -120,6 +122,7 @@ Commands:
 | `pane zoom` | Toggle zoom on the current pane. |
 | `pane break` | Convert a pane into its own window. |
 | `pane join <src> <dst> <dir>` | Join a pane into another window. |
+| `diff <session> [options]` | Show everything the agent changed in its worktree vs the base branch. `--stat` for summary, `--staged` for staged only, `--base <branch>` to override auto-detected base, `--path <path>` to restrict, `--no-pager` for raw stdout. |
 | `git status` | Show git status for the active worktree. |
 | `git diff` | Show diff in a tmux pane. |
 | `git log` | Show commit log in a tmux pane. |

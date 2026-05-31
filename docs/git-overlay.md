@@ -15,6 +15,29 @@ The tmux status bar automatically shows:
 
 Example status bar: `[2] my-session | main ▲2 ▼1 ●3 ○2 ?1 | 120×40 bash | 14:30`
 
+## Session Diff
+
+`gmux diff <session>` shows everything an agent has changed since the worktree was created — both committed and uncommitted work — compared to the base branch (auto-detected as `main`, `master`, `origin/main`, or `origin/master`).
+
+```sh
+gmux diff my-session                      # full diff in less pager
+gmux diff my-session --stat               # file-level summary (lines added/removed)
+gmux diff my-session --staged             # staged (cached) changes only
+gmux diff my-session --base develop       # compare against a custom base branch
+gmux diff my-session --path src/api.ts    # restrict to a single file or directory
+gmux diff my-session --no-pager           # print raw diff to stdout (pipe-friendly)
+```
+
+The command uses `git merge-base HEAD <base>` to find the exact point the branch diverged, so the output faithfully reflects only the agent's work — not unrelated upstream commits.
+
+**Pipe-friendly examples:**
+
+```sh
+gmux diff my-session --no-pager | grep "^+"         # added lines only
+gmux diff my-session --no-pager | wc -l              # rough line count
+gmux diff my-session --stat --no-pager | tail -1     # summary line
+```
+
 ## Git Commands in tmux
 
 ### Show Git Status

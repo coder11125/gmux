@@ -134,9 +134,8 @@ async function renamePane(newName: string, targetId?: string): Promise<void> {
   // the window, not the pane. For panes we update the window title via
   // the pane's title escape sequence.
   if (targetId) {
-    // Send the title-change escape sequence directly into the pane.
-    const escaped = newName.replace(/'/g, "'\\''");
-    const result = await $`tmux send-keys -t ${targetId} "printf '\\033]2;${escaped}\\007'" Enter`.nothrow();
+    // Use tmux's native pane-title API (tmux ≥ 2.6) — no shell execution needed.
+    const result = await $`tmux select-pane -t ${targetId} -T ${newName}`.nothrow();
     if (result.exitCode !== 0) {
       const stderr = result.stderr.toString().trim();
       if (stderr.includes("can't find") || stderr.includes("pane not found")) {

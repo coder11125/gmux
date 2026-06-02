@@ -9,7 +9,7 @@
 //	gmux-update --force            # re-download even if same version
 //	gmux-update --dry-run          # check for update without doing anything
 //
-// Exit codes: 0 = updated, 1 = already up-to-date, 2 = error.
+// Exit codes: 0 = success (updated or already up-to-date), 2 = error.
 
 package main
 

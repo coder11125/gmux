@@ -33,6 +33,7 @@ const MONITOR_BIN = resolveMonitorBin();
 
 export class ProcessMonitor {
   private sessions: Map<string, SessionEntry> = new Map();
+  private goWatched: Set<string> = new Set();
   private intervalId: ReturnType<typeof setInterval> | null = null;
   onIdle: IdleCallback | null = null;
 
@@ -42,12 +43,14 @@ export class ProcessMonitor {
     this.sessions.set(sessionName, entry);
 
     if (MONITOR_BIN) {
+      this.goWatched.add(sessionName);
       this.watchWithGo(entry);
     }
   }
 
   remove(sessionName: string): void {
     this.sessions.delete(sessionName);
+    this.goWatched.delete(sessionName);
   }
 
   start(): void {
@@ -92,7 +95,8 @@ export class ProcessMonitor {
     });
 
     child.on("error", () => {
-      // Go binary unavailable at runtime — fall back to polling for this entry
+      // Go binary failed for this entry — fall back to TS polling for it only
+      this.goWatched.delete(entry.sessionName);
       if (!this.intervalId) {
         this.intervalId = setInterval(() => this.poll(), 2000);
       }
@@ -107,6 +111,8 @@ export class ProcessMonitor {
     const idle: SessionEntry[] = [];
 
     for (const entry of this.sessions.values()) {
+      // Skip sessions with a healthy Go watcher — they self-report idle
+      if (this.goWatched.has(entry.sessionName)) continue;
       const wasRunning = entry.running;
       entry.running = await this.isAgentRunning(entry.paneId, entry.processName);
       if (wasRunning && !entry.running) {

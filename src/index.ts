@@ -633,6 +633,19 @@ program
           instances.push({ name: instanceName, branch: branchName, worktreePath });
         }
 
+        monitor.onIdle = async (idleName, _paneId) => {
+          const record = await store.getSession(idleName);
+          if (!record) return;
+          monitor.remove(idleName);
+          await teardown.teardown({
+            sessionName: idleName,
+            worktreePath: record.worktreePath,
+            windowId: record.tmuxWindowId,
+            autoMerge: options.autoMerge,
+          });
+          await store.updateStatus(idleName, "complete");
+        };
+
         if (options.panes && count > 1) {
           const paths = instances.map((i) => i.worktreePath);
           console.log(`  window   ${sessionName} (${count} panes)`);
@@ -684,19 +697,6 @@ program
             monitor.add(inst.name, paneId, agent);
           }
         }
-
-        monitor.onIdle = async (idleName, _paneId) => {
-          const record = await store.getSession(idleName);
-          if (!record) return;
-          monitor.remove(idleName);
-          await teardown.teardown({
-            sessionName: idleName,
-            worktreePath: record.worktreePath,
-            windowId: record.tmuxWindowId,
-            autoMerge: options.autoMerge,
-          });
-          await store.updateStatus(idleName, "complete");
-        };
 
         monitor.start();
       } catch (err: unknown) {

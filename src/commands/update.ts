@@ -45,7 +45,6 @@ export async function runUpdate(opts: UpdateOptions = {}): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     child.on("exit", (code) => {
       if (code === 0) resolve();
-      else if (code === 1) resolve(); // up-to-date is not an error
       else process.exit(code ?? 2);
     });
     child.on("error", (err) => {

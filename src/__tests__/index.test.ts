@@ -55,6 +55,35 @@ describe("CLI", () => {
 
       expect(stdout).toContain("list");
       expect(stdout).toContain("doctor");
+      expect(stdout).toContain("attach");
+      expect(stdout).toContain("detach");
+      expect(stdout).toContain("kill");
+      expect(stdout).toContain("rename");
+      expect(stdout).toContain("window");
+      expect(stdout).toContain("pane");
+      expect(stdout).toContain("git");
+    });
+
+    it("shows tmux command help", () => {
+      const windowHelp = runCLI("window", "--help");
+      const paneHelp = runCLI("pane", "--help");
+
+      expect(windowHelp.exitCode).toBe(0);
+      expect(windowHelp.stdout).toContain("Manage tmux windows");
+      expect(windowHelp.stdout).toContain("gmux window list");
+      expect(paneHelp.exitCode).toBe(0);
+      expect(paneHelp.stdout).toContain("Manage tmux panes");
+      expect(paneHelp.stdout).toContain("gmux pane split");
+    });
+
+    it("shows git overlay command help", () => {
+      const { exitCode, stdout } = runCLI("git", "--help");
+
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain("Git overlay commands");
+      expect(stdout).toContain("gmux git status");
+      expect(stdout).toContain("gmux git stash list");
+      expect(stdout).toContain("gmux git stash drop 0");
     });
   });
 

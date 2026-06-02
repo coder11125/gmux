@@ -9,6 +9,7 @@ import { ProcessMonitor } from "./process-monitor.ts";
 import { TeardownManager } from "./teardown-manager.ts";
 import { SessionStore } from "./session-store.ts";
 import { listSessions, type ListOptions } from "./commands/list.ts";
+import { logSession, type LogOptions } from "./commands/log.ts";
 import { doctorSessions, type DoctorOptions } from "./commands/doctor.ts";
 import { sessionDiff, showSessionDiffInPager, type DiffOptions } from "./commands/diff.ts";
 import { runScript, listScripts } from "./scripts.ts";
@@ -47,6 +48,17 @@ program
   .action(async (opts: ListOptions) => {
     const store = new SessionStore();
     await listSessions(store, opts);
+  });
+
+program
+  .command("log <session>")
+  .description("Capture tmux pane output for a session and append to a log file")
+  .option("--follow", "poll every 2 s and stream new lines to stdout (Ctrl+C to stop)")
+  .option("--since <duration>", "filter output to recent captures (e.g. 10m, 1h, 30s)")
+  .option("--out <file>", "write to a custom path instead of ~/.gmux/logs/<session>.log")
+  .action(async (sessionName: string, opts: LogOptions) => {
+    const store = new SessionStore();
+    await logSession(store, sessionName, opts);
   });
 
 program

@@ -31,7 +31,11 @@ export async function sessionDiff(worktreePath: string, options: DiffOptions = {
       args.push("--cached");
     } else {
       const mergeBase = await findMergeBase(worktreePath, options.base);
-      if (mergeBase) args.push(mergeBase);
+      if (mergeBase) {
+        args.push(mergeBase);
+      } else {
+        process.stderr.write("  warn     Could not find merge base — showing unstaged changes only.\n");
+      }
     }
 
     if (options.stat) args.push("--stat");

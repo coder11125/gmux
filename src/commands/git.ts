@@ -245,8 +245,8 @@ async function parseConflictMarkers(
           theirs.push(lines[i] ?? "");
           i++;
         }
-        const endLine = i + 1;
         const foundEnd = i < lines.length;
+        const endLine = foundEnd ? i + 1 : -1;
         if (foundEnd) i++; // skip >>>>>>>
 
         if (foundSeparator && foundEnd) {

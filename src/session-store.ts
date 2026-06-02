@@ -1,10 +1,11 @@
 import { mkdir, open, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import Path from "node:path";
 import { homedir } from "node:os";
+import type { SessionStatus } from "./types.ts";
 
-export type SessionStatus = "running" | "complete" | "error";
+export type { SessionStatus };
 
-const VALID_STATUSES = new Set<SessionStatus>(["running", "complete", "error"]);
+const VALID_STATUSES = new Set<SessionStatus>(["running", "complete", "error", "attached", "detached"]);
 
 export interface SessionRecord {
   sessionName: string;

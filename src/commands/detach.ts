@@ -48,14 +48,6 @@ async function detachAll(store: SessionStore): Promise<void> {
     throw new Error(`Failed to detach from all sessions: ${stderr}`);
   }
 
-  // Update every tracked session that is currently running.
-  const sessions = await store.listSessions();
-  for (const s of sessions) {
-    if (s.status === "running") {
-      await store.updateStatus(s.sessionName, "running");
-    }
-  }
-
   console.log("  detach   Detached from all sessions.");
 }
 

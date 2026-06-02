@@ -506,6 +506,20 @@ export interface KillOptions {
 }
 
 /**
+ * Options for the `log` command.
+ */
+export interface LogOptions {
+  /** Poll every 2 s and stream new output to stdout. */
+  follow?: boolean;
+
+  /** Only show lines from captures within this duration (e.g. `"10m"`, `"1h"`). */
+  since?: string;
+
+  /** Write log to this path instead of `~/.gmux/logs/<session>.log`. */
+  out?: string;
+}
+
+/**
  * Options for renaming sessions, windows, or panes.
  */
 export interface RenameOptions {
